@@ -58,9 +58,9 @@
                 <!-- Step 2: Data Source -->
                 <div class="mb-6">
                     <label for="csv-url" class="block text-lg font-semibold text-gray-700 mb-2">Step 2: CSV Data URL</label>
-                    <p class="text-sm text-gray-600 mb-3">Paste the public URL to your CSV file. The file must be accessible (e.g., a direct download link from Box, Dropbox, or a raw GitHub link).</p>
+                    <p class="text-sm text-gray-600 mb-3">Paste the public URL to your raw CSV file. For this to work, the data must be hosted on a service that allows cross-origin requests (CORS). <strong>Using a "Raw" link from a public GitHub repository is the most reliable method.</strong></p>
                     <div class="flex items-center space-x-2">
-                        <input type="text" id="csv-url" class="flex-grow w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="https://example.com/data.csv">
+                        <input type="text" id="csv-url" class="flex-grow w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="https://raw.githubusercontent.com/...">
                         <button id="load-data-btn" class="bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-300">
                             Load
                         </button>
@@ -94,7 +94,7 @@
 
             <!-- Plot Column -->
             <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg border border-gray-200 min-h-[600px] relative">
-                 <button id="download-pdf-btn" class="hidden absolute top-4 right-4 bg-gray-200 text-gray-700 py-1 px-3 rounded-lg hover:bg-gray-300 transition duration-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50">
+                 <button id="download-pdf-btn" class="hidden absolute top-4 left-4 bg-gray-200 text-gray-700 py-1 px-3 rounded-lg hover:bg-gray-300 transition duration-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50">
                     Download PDF
                  </button>
                  <div id="plot-div" class="w-full h-full"></div>
@@ -269,10 +269,9 @@ write.csv(final_data, "seurat_expression_for_web.csv", row.names = FALSE)
             try {
                 const response = await fetch(url);
                 if (!response.ok) {
-                    throw new Error(`Network response was not ok: ${response.statusText}`);
+                    throw new Error(`Network response was not ok: ${response.statusText}. This is often a CORS issue. Please use a direct, raw link from a service like GitHub.`);
                 }
                 const csvText = await response.text();
-                // Using a custom CSV parser as Plotly.d3 is deprecated in v2
                 plotData = parseCSV(csvText);
                 
                 populateSelectors(plotData);
@@ -281,7 +280,7 @@ write.csv(final_data, "seurat_expression_for_web.csv", row.names = FALSE)
 
             } catch (error) {
                 console.error("Failed to load or parse CSV:", error);
-                showError("Failed to load data. Check the URL and ensure it's a public, direct link to a valid CSV file.");
+                showError(error.message || "Failed to load data. Please ensure the URL is a direct, raw link from a CORS-enabled host like GitHub.");
                 plotConfigSection.classList.add('hidden');
                 Plotly.purge(plotDiv);
             } finally {
@@ -379,7 +378,14 @@ write.csv(final_data, "seurat_expression_for_web.csv", row.names = FALSE)
                 font: {
                     family: 'Inter, sans-serif'
                 },
-                margin: { l: 60, r: 30, b: 80, t: 80 },
+                legend: {
+                    orientation: "h",
+                    yanchor: "bottom",
+                    y: -0.3,
+                    xanchor: "center",
+                    x: 0.5
+                },
+                margin: { l: 60, r: 30, b: 120, t: 80 },
                 paper_bgcolor: 'rgba(0,0,0,0)',
                 plot_bgcolor: 'rgba(0,0,0,0)',
             };
